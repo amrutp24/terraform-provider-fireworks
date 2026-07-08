@@ -9,6 +9,9 @@ description: |-
 An on-demand GPU inference deployment. Billed per GPU-minute while replicas
 are running; set `min_replica_count = 0` to allow scale-to-zero.
 
+~> Creating deployments requires a payment method on the Fireworks account;
+the API returns `HTTP 400: payment method is required` otherwise.
+
 ## Example Usage
 
 ```terraform

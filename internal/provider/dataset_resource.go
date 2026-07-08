@@ -95,7 +95,7 @@ func (r *DatasetResource) Schema(ctx context.Context, req resource.SchemaRequest
 				},
 			},
 			"example_count": schema.Int64Attribute{
-				Description: "Number of examples in the dataset.",
+				Description: "Number of examples in the dataset. Required by the API when external_url is not set (uploaded datasets).",
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.Int64{

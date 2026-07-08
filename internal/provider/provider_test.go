@@ -155,6 +155,12 @@ func (m *mockFireworks) serveDatasets(w http.ResponseWriter, r *http.Request, id
 		if ds == nil {
 			ds = &client.Dataset{}
 		}
+		// Real-API rule (verified 2026-07-07): uploaded datasets (no
+		// externalUrl) must declare exampleCount.
+		if ds.ExternalURL == "" && ds.ExampleCount == 0 {
+			http.Error(w, `{"code":9,"message":"error validating dataset: example_count is required for uploaded datasets"}`, http.StatusBadRequest)
+			return
+		}
 		ds.Name = "accounts/test-account/datasets/" + req.DatasetID
 		ds.State = "READY"
 		if ds.Format == "" {

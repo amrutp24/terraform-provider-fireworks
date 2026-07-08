@@ -5,3 +5,7 @@ dist/
 .terraform.lock.hcl
 terraform.tfstate
 terraform.tfstate.backup
+
+# local dev/test workbench, never committed
+dev.tfrc
+smoketest/

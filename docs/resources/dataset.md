@@ -32,7 +32,8 @@ resource "fireworks_dataset" "training" {
 - `display_name` (String) Human-readable name. Forces replacement.
 - `external_url` (String) External URI of the dataset contents, e.g. `gs://bucket/data.jsonl`. Forces replacement.
 - `format` (String) Dataset format: `CHAT`, `COMPLETION`, or `RL`. Forces replacement.
-- `example_count` (Number) Number of examples in the dataset. Forces replacement.
+- `example_count` (Number) Number of examples in the dataset. The API requires
+  it when `external_url` is not set (uploaded datasets). Forces replacement.
 
 ### Read-Only
 

@@ -100,11 +100,13 @@ func (p *FireworksProvider) Resources(ctx context.Context) []func() resource.Res
 	return []func() resource.Resource{
 		NewDeploymentResource,
 		NewDatasetResource,
+		NewSFTJobResource,
 	}
 }
 
 func (p *FireworksProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewDeploymentDataSource,
+		NewModelDataSource,
 	}
 }

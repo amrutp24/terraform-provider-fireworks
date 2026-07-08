@@ -21,10 +21,14 @@ resource "fireworks_deployment" "llama" {
   full CRUD, import, waits for `READY` state.
 - `fireworks_dataset` (resource) — fine-tuning/eval dataset (immutable,
   changes force replacement).
+- `fireworks_supervised_fine_tuning_job` (resource) — asynchronous SFT job
+  (immutable; track progress via `state` on refresh).
 - `fireworks_deployment` (data source) — look up an existing deployment.
+- `fireworks_model` (data source) — look up a model, e.g. a fine-tune's
+  output model.
 
-Roadmap: fine-tuning job resource, autoscaling policy block, dataset file
-upload, model data source.
+Roadmap: autoscaling policy block, dataset file upload, reinforcement
+fine-tuning jobs.
 
 ## Authentication
 
@@ -55,6 +59,9 @@ To run the example against your real account with a local build, create a
 - `fireworks_deployment`: covered by mock acceptance tests; the schema
   follows the documented API. Not yet exercised against production, since
   creating any deployment requires a payment method on the account.
+- `fireworks_supervised_fine_tuning_job` and `fireworks_model`: covered by
+  mock acceptance tests; running real fine-tuning jobs incurs training
+  costs, so they are not exercised against production.
 
 ## Publishing to the Terraform Registry
 

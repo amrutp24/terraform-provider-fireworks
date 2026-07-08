@@ -25,12 +25,25 @@ type mockFireworks struct {
 	nextID      int
 	deployments map[string]*client.Deployment
 	datasets    map[string]*client.Dataset
+	sftJobs     map[string]*client.SupervisedFineTuningJob
+	models      map[string]*client.Model
 }
 
 func newMockFireworks(t *testing.T) *httptest.Server {
 	m := &mockFireworks{
 		deployments: map[string]*client.Deployment{},
 		datasets:    map[string]*client.Dataset{},
+		sftJobs:     map[string]*client.SupervisedFineTuningJob{},
+		models: map[string]*client.Model{
+			// Seeded model for data source tests.
+			"llama-test": {
+				Name:        "accounts/test-account/models/llama-test",
+				DisplayName: "Llama Test",
+				State:       "READY",
+				Kind:        "HF_BASE_MODEL",
+				CreateTime:  "2026-07-05T00:00:00Z",
+			},
+		},
 	}
 	srv := httptest.NewServer(m)
 	t.Cleanup(srv.Close)
@@ -63,6 +76,10 @@ func (m *mockFireworks) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		m.serveDeployments(w, r, id)
 	case "datasets":
 		m.serveDatasets(w, r, id)
+	case "supervisedFineTuningJobs":
+		m.serveSFTJobs(w, r, id)
+	case "models":
+		m.serveModels(w, r, id)
 	default:
 		http.NotFound(w, r)
 	}
@@ -188,6 +205,56 @@ func (m *mockFireworks) serveDatasets(w http.ResponseWriter, r *http.Request, id
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func (m *mockFireworks) serveSFTJobs(w http.ResponseWriter, r *http.Request, id string) {
+	switch {
+	case r.Method == http.MethodPost && id == "":
+		var job client.SupervisedFineTuningJob
+		_ = json.NewDecoder(r.Body).Decode(&job)
+		m.nextID++
+		jobID := fmt.Sprintf("sftj%d", m.nextID)
+		job.Name = "accounts/test-account/supervisedFineTuningJobs/" + jobID
+		job.State = client.JobStateRunning
+		job.CreateTime = "2026-07-05T00:00:00Z"
+		if job.OutputModel == "" {
+			job.OutputModel = "accounts/test-account/models/" + jobID + "-model"
+		}
+		m.sftJobs[jobID] = &job
+		writeJSON(w, &job)
+
+	case r.Method == http.MethodGet && id != "":
+		job, ok := m.sftJobs[id]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		writeJSON(w, job)
+
+	case r.Method == http.MethodDelete && id != "":
+		if _, ok := m.sftJobs[id]; !ok {
+			http.NotFound(w, r)
+			return
+		}
+		delete(m.sftJobs, id)
+		writeJSON(w, map[string]string{})
+
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (m *mockFireworks) serveModels(w http.ResponseWriter, r *http.Request, id string) {
+	if r.Method != http.MethodGet || id == "" {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	model, ok := m.models[id]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	writeJSON(w, model)
 }
 
 func writeJSON(w http.ResponseWriter, v any) {

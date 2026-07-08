@@ -48,6 +48,14 @@ To run the example against your real account with a local build, create a
 `dev.tfrc` with `dev_overrides` pointing at `bin/` (see HashiCorp's
 [dev overrides docs](https://developer.hashicorp.com/terraform/cli/config/config-file#development-overrides-for-provider-developers)).
 
+### Verification status
+
+- `fireworks_dataset`: full lifecycle (create, refresh, destroy) verified
+  against the production API.
+- `fireworks_deployment`: covered by mock acceptance tests; the schema
+  follows the documented API. Not yet exercised against production, since
+  creating any deployment requires a payment method on the account.
+
 ## Publishing to the Terraform Registry
 
 One-time setup, following the

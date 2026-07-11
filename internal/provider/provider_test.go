@@ -142,11 +142,11 @@ func applyDeploymentDefaults(dep *client.Deployment) {
 		dep.MinReplicaCount = &zero
 	}
 	if dep.MaxReplicaCount == nil {
-		max := *dep.MinReplicaCount
-		if max < 1 {
-			max = 1
+		maxReplicas := *dep.MinReplicaCount
+		if maxReplicas < 1 {
+			maxReplicas = 1
 		}
-		dep.MaxReplicaCount = &max
+		dep.MaxReplicaCount = &maxReplicas
 	}
 	if dep.AcceleratorType == "" {
 		dep.AcceleratorType = "NVIDIA_A100_80GB"

@@ -1,0 +1,33 @@
+name: Bug report
+description: Something the provider does wrong
+labels: [bug]
+body:
+  - type: input
+    id: provider-version
+    attributes:
+      label: Provider version
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: input
+    id: tf-version
+    attributes:
+      label: Terraform version
+      placeholder: "1.12.x"
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Terraform configuration
+      description: Minimal config that reproduces the issue (redact account IDs and never include API keys).
+      render: terraform
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected vs. actual behavior
+      description: Include plan/apply output or error messages (redact credentials).
+    validations:
+      required: true

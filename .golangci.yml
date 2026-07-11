@@ -1,0 +1,17 @@
+version: "2"
+
+linters:
+  # standard = errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
+  enable:
+    - forcetypeassert
+    - makezero
+    - misspell
+    - nilerr
+    - predeclared
+    - unconvert
+    - unparam
+
+formatters:
+  enable:
+    - gofmt

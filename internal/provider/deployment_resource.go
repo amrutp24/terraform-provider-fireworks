@@ -58,6 +58,10 @@ func (r *DeploymentResource) Schema(ctx context.Context, req resource.SchemaRequ
 	resp.Schema = schema.Schema{
 		Description: "An on-demand GPU inference deployment. Billed per GPU-minute while replicas are running; " +
 			"set min_replica_count = 0 to allow scale-to-zero.",
+		MarkdownDescription: "An on-demand GPU inference deployment. Billed per GPU-minute while replicas are " +
+			"running; set `min_replica_count = 0` to allow scale-to-zero.\n\n" +
+			"~> Creating deployments requires a payment method on the Fireworks account; " +
+			"the API returns `HTTP 400: payment method is required` otherwise.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "Deployment ID (last segment of the resource name).",

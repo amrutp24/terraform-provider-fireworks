@@ -48,14 +48,38 @@ func (d *DeploymentDataSource) Schema(ctx context.Context, req datasource.Schema
 				Description: "Deployment ID.",
 				Required:    true,
 			},
-			"name":              schema.StringAttribute{Computed: true},
-			"base_model":        schema.StringAttribute{Computed: true},
-			"display_name":      schema.StringAttribute{Computed: true},
-			"min_replica_count": schema.Int64Attribute{Computed: true},
-			"max_replica_count": schema.Int64Attribute{Computed: true},
-			"accelerator_type":  schema.StringAttribute{Computed: true},
-			"precision":         schema.StringAttribute{Computed: true},
-			"state":             schema.StringAttribute{Computed: true},
+			"name": schema.StringAttribute{
+				Description: "Full resource name, e.g. accounts/my-account/deployments/abc123.",
+				Computed:    true,
+			},
+			"base_model": schema.StringAttribute{
+				Description: "Model the deployment serves.",
+				Computed:    true,
+			},
+			"display_name": schema.StringAttribute{
+				Description: "Human-readable name.",
+				Computed:    true,
+			},
+			"min_replica_count": schema.Int64Attribute{
+				Description: "Minimum replicas; 0 means scale-to-zero is enabled.",
+				Computed:    true,
+			},
+			"max_replica_count": schema.Int64Attribute{
+				Description: "Maximum replicas for autoscaling.",
+				Computed:    true,
+			},
+			"accelerator_type": schema.StringAttribute{
+				Description: "GPU type serving the deployment.",
+				Computed:    true,
+			},
+			"precision": schema.StringAttribute{
+				Description: "Model serving precision.",
+				Computed:    true,
+			},
+			"state": schema.StringAttribute{
+				Description: "Current deployment state (CREATING, READY, UPDATING, DELETING, FAILED).",
+				Computed:    true,
+			},
 		},
 	}
 }

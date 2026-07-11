@@ -9,6 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
 
+// Regenerate docs/ from the provider schema and examples/ (CI fails on drift).
+//go:generate go tool tfplugindocs generate --provider-name fireworks --rendered-provider-name Fireworks
+
 // Set at build time by GoReleaser.
 var version = "dev"
 

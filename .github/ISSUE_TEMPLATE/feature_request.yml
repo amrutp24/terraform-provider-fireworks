@@ -1,0 +1,21 @@
+name: Feature request
+description: A resource, data source, or attribute the provider should support
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to manage?
+      description: The Fireworks feature or workflow, e.g. "autoscaling policies on deployments".
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed interface
+      description: What would the resource/attribute look like in HCL? Sketch is fine.
+  - type: input
+    id: api
+    attributes:
+      label: Fireworks API reference
+      description: Link to the relevant Fireworks API docs, if known.

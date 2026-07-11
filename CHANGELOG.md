@@ -2,13 +2,16 @@
 
 All notable changes to this provider. Versions follow [SemVer](https://semver.org).
 
-## Unreleased
+## [0.3.0] - 2026-07-11
 
 ### Added
 - `docs/` now generated from the provider schema with tfplugindocs; CI fails on drift
 - CI: golangci-lint, govulncheck, `go mod tidy` check, and acceptance tests across a Terraform version matrix (1.5 → latest)
 - Dependabot for Go modules and GitHub Actions; all CI actions pinned to commit SHAs
 - Community health files (contributing, security policy, issue/PR templates)
+
+### Security
+- Go toolchain 1.26.2 → 1.26.5 and `golang.org/x/net` v0.52.0 → v0.57.0, clearing all govulncheck findings (crypto/tls ECH leak, net/textproto, crypto/x509, x/net idna and HTTP/2 issues)
 
 ## [0.2.0] - 2026-07-08
 

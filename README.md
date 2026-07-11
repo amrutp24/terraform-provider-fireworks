@@ -63,25 +63,6 @@ To run the example against your real account with a local build, create a
   mock acceptance tests; running real fine-tuning jobs incurs training
   costs, so they are not exercised against production.
 
-## Publishing to the Terraform Registry
-
-One-time setup, following the
-[official guide](https://developer.hashicorp.com/terraform/registry/providers/publishing):
-
-1. **Create a public GitHub repo** named exactly `terraform-provider-fireworks`
-   and push this code. The registry namespace equals the GitHub owner
-   (`amrutp24`).
-2. **Create a GPG signing key**: `gpg --full-generate-key` (RSA 4096), then
-   export the ASCII-armored public key.
-3. **Add repo secrets** `GPG_PRIVATE_KEY` and `PASSPHRASE` for the release
-   workflow.
-4. **Tag a release**: `git tag v0.1.0 && git push origin v0.1.0` — the
-   `release` workflow builds, signs, and publishes artifacts via GoReleaser.
-5. **Register on the registry**: sign in at
-   [registry.terraform.io](https://registry.terraform.io) with GitHub, add
-   your GPG public key, then "Publish → Provider" and select the repo.
-   Future tags publish automatically.
-
 ## License
 
 [MPL-2.0](LICENSE)

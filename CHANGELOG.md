@@ -2,6 +2,11 @@
 
 All notable changes to this provider. Versions follow [SemVer](https://semver.org).
 
+## Unreleased
+
+### Security
+- `google.golang.org/grpc` v1.79.3 → v1.82.1 (GO-2026-6061)
+
 ## [0.3.0] - 2026-07-11
 
 ### Added

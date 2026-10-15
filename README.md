@@ -1,67 +1,124 @@
 # terraform-provider-fireworks
 
-Terraform provider for [Fireworks AI](https://fireworks.ai): manage GPU
-inference deployments and datasets as infrastructure-as-code.
+[![CI](https://github.com/amrutp24/terraform-provider-fireworks/actions/workflows/ci.yml/badge.svg)](https://github.com/amrutp24/terraform-provider-fireworks/actions/workflows/ci.yml)
+[![Registry](https://img.shields.io/badge/registry-amrutp24%2Ffireworks-5c4ee5)](https://registry.terraform.io/providers/amrutp24/fireworks/latest)
 
-As of July 2026 there is no other Fireworks provider on the Terraform
-Registry — deployments are otherwise managed with `firectl` or the console.
+Terraform provider for [Fireworks AI](https://fireworks.ai): GPU inference
+deployments, fine-tuning datasets and fine-tuning jobs.
+
+Docs: [registry.terraform.io/providers/amrutp24/fireworks/latest/docs](https://registry.terraform.io/providers/amrutp24/fireworks/latest/docs).
+Changelog: [CHANGELOG.md](CHANGELOG.md).
+
+## Maturity
+
+A community provider at 0.x. Minor releases can change the schema, so pin a
+version.
+
+What has been run against the real API:
+
+| Resource | Production |
+| --- | --- |
+| `fireworks_dataset` | create, refresh, destroy |
+| `fireworks_deployment` | mock tests only; creating one needs a payment method on the account |
+| `fireworks_supervised_fine_tuning_job` | mock tests only; training a real job costs money |
+| `fireworks_model` | mock tests only |
+
+Where the real API has not been exercised, the schema follows Fireworks'
+documentation.
+
+## Usage
 
 ```terraform
-resource "fireworks_deployment" "llama" {
-  base_model        = "accounts/fireworks/models/llama-v3p1-8b-instruct"
-  min_replica_count = 0 # scale to zero when idle
-  max_replica_count = 2
-  accelerator_type  = "NVIDIA_H100_80GB"
+terraform {
+  required_providers {
+    fireworks = {
+      source  = "amrutp24/fireworks"
+      version = "~> 0.3"
+    }
+  }
+}
+
+provider "fireworks" {
+  # Read from FIREWORKS_API_KEY and FIREWORKS_ACCOUNT_ID when unset here.
+  account_id = "my-account"
+}
+
+# Datasets are immutable; any change replaces the resource.
+resource "fireworks_dataset" "training" {
+  dataset_id   = "support-tickets-v1"
+  format       = "CHAT"
+  external_url = "gs://my-bucket/support-tickets.jsonl"
 }
 ```
 
-## Resources and data sources
+### Deployments
 
-- `fireworks_deployment` (resource) — on-demand GPU inference deployment:
-  full CRUD, import, waits for `READY` state.
-- `fireworks_dataset` (resource) — fine-tuning/eval dataset (immutable,
-  changes force replacement).
-- `fireworks_supervised_fine_tuning_job` (resource) — asynchronous SFT job
-  (immutable; track progress via `state` on refresh).
-- `fireworks_deployment` (data source) — look up an existing deployment.
-- `fireworks_model` (data source) — look up a model, e.g. a fine-tune's
-  output model.
+A deployment reserves GPUs while replicas are up. `min_replica_count`
+defaults to 0, which scales to zero when idle; anything above 0 is always-on
+spend.
 
-Roadmap: autoscaling policy block, dataset file upload, reinforcement
-fine-tuning jobs.
+```terraform
+resource "fireworks_deployment" "llama" {
+  base_model       = "accounts/fireworks/models/llama-v3p1-8b-instruct"
+  accelerator_type = "NVIDIA_H100_80GB"
 
-## Authentication
+  # Scale to zero; the first request afterwards pays a cold start.
+  min_replica_count = 0
+  max_replica_count = 2
+}
+```
 
-| Provider attribute | Environment variable    |
-|--------------------|-------------------------|
-| `api_key`          | `FIREWORKS_API_KEY`     |
-| `account_id`       | `FIREWORKS_ACCOUNT_ID`  |
+`apply` waits for `READY`. Set `wait_for_ready = false` to return once the API
+accepts the request.
+
+GPU rates are on the [pricing page](https://fireworks.ai/pricing). Neither
+this provider nor `terraform plan` reports cost.
+
+## Resources
+
+| Name | Notes |
+| --- | --- |
+| `fireworks_deployment` | On-demand GPU inference. CRUD, import, waits for `READY`. |
+| `fireworks_dataset` | Fine-tuning or evaluation dataset. Immutable. Registers data by `external_url`; local file upload is not supported yet. |
+| `fireworks_supervised_fine_tuning_job` | Asynchronous SFT job. Immutable; progress shows in `state` on refresh. |
+
+## Data sources
+
+| Name | Notes |
+| --- | --- |
+| `fireworks_deployment` | An existing deployment. |
+| `fireworks_model` | A model, such as a fine-tune's output model. |
+
+Not implemented: autoscaling policy blocks, dataset file upload,
+reinforcement fine-tuning jobs.
 
 ## Development
 
-```powershell
-go build -o bin/terraform-provider-fireworks.exe .
+Go as pinned in [`go.mod`](go.mod), Terraform 1.5+.
 
-# Acceptance tests run against an in-process mock of the Fireworks API,
-# so no credentials or GPU spend are needed:
-$env:TF_ACC = "1"
-go test ./... -v
+```bash
+go build -o bin/terraform-provider-fireworks .
+TF_ACC=1 go test ./...
 ```
 
-To run the example against your real account with a local build, create a
-`dev.tfrc` with `dev_overrides` pointing at `bin/` (see HashiCorp's
-[dev overrides docs](https://developer.hashicorp.com/terraform/cli/config/config-file#development-overrides-for-provider-developers)).
+```powershell
+go build -o bin/terraform-provider-fireworks.exe .
+$env:TF_ACC = "1"; go test ./...
+```
 
-### Verification status
+The acceptance tests run against an in-process mock of the Fireworks API, so
+they need no credentials and no GPU spend.
 
-- `fireworks_dataset`: full lifecycle (create, refresh, destroy) verified
-  against the production API.
-- `fireworks_deployment`: covered by mock acceptance tests; the schema
-  follows the documented API. Not yet exercised against production, since
-  creating any deployment requires a payment method on the account.
-- `fireworks_supervised_fine_tuning_job` and `fireworks_model`: covered by
-  mock acceptance tests; running real fine-tuning jobs incurs training
-  costs, so they are not exercised against production.
+CI runs the build, `golangci-lint`, `govulncheck`, a `tfplugindocs` drift
+check, and the acceptance tests across Terraform 1.5 through latest. `docs/`
+is generated: regenerate it after a schema change or CI fails on the diff.
+
+For a local build, put `dev_overrides` for `amrutp24/fireworks` in a
+`dev.tfrc` pointing at `bin/` and set `TF_CLI_CONFIG_FILE` to it ([dev
+overrides](https://developer.hashicorp.com/terraform/cli/config/config-file#development-overrides-for-provider-developers)).
+
+Contributing: [CONTRIBUTING.md](CONTRIBUTING.md).
+Security reports: [SECURITY.md](SECURITY.md).
 
 ## License
 

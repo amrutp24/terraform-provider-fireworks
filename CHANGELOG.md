@@ -2,6 +2,15 @@
 
 All notable changes to this provider. Versions follow [SemVer](https://semver.org).
 
+## [0.3.2] - 2026-11-09
+
+### Security
+- Go toolchain 1.26.5 → 1.26.10
+- `golang.org/x/net` v0.57.0 → v0.60.0, `golang.org/x/crypto` v0.54.0 → v0.57.0, `google.golang.org/grpc` v1.82.1 → v1.83.2
+
+### Changed
+- README rewritten
+
 ## [0.3.1] - 2026-08-01
 
 ### Security

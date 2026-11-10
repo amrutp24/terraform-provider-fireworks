@@ -22,6 +22,7 @@ What has been run against the real API:
 | `fireworks_deployment` | mock tests only; creating one needs a payment method on the account |
 | `fireworks_supervised_fine_tuning_job` | mock tests only; training a real job costs money |
 | `fireworks_model` | mock tests only |
+| `fireworks_secret` | create, refresh, destroy |
 
 Where the real API has not been exercised, the schema follows Fireworks'
 documentation.
@@ -81,6 +82,7 @@ this provider nor `terraform plan` reports cost.
 | `fireworks_deployment` | On-demand GPU inference. CRUD, import, waits for `READY`. |
 | `fireworks_dataset` | Fine-tuning or evaluation dataset. Immutable. Registers data by `external_url`; local file upload is not supported yet. |
 | `fireworks_supervised_fine_tuning_job` | Asynchronous SFT job. Immutable; progress shows in `state` on refresh. |
+| `fireworks_secret` | Account secret. The value is kept in state and never read back, so changes made outside Terraform aren't detected. |
 
 ## Data sources
 
@@ -90,7 +92,8 @@ this provider nor `terraform plan` reports cost.
 | `fireworks_model` | A model, such as a fine-tune's output model. |
 
 Not implemented: autoscaling policy blocks, dataset file upload,
-reinforcement fine-tuning jobs.
+reinforcement fine-tuning jobs. API keys can't be managed: Fireworks only
+creates them after a browser sign-in, not with an API key.
 
 ## Development
 

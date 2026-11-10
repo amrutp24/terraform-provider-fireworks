@@ -27,6 +27,7 @@ type mockFireworks struct {
 	datasets    map[string]*client.Dataset
 	sftJobs     map[string]*client.SupervisedFineTuningJob
 	models      map[string]*client.Model
+	secrets     map[string]*client.Secret
 }
 
 func newMockFireworks(t *testing.T) *httptest.Server {
@@ -80,6 +81,8 @@ func (m *mockFireworks) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		m.serveSFTJobs(w, r, id)
 	case "models":
 		m.serveModels(w, r, id)
+	case "secrets":
+		m.serveSecrets(w, r, id)
 	default:
 		http.NotFound(w, r)
 	}

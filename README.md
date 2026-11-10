@@ -4,7 +4,7 @@
 [![Registry](https://img.shields.io/badge/registry-amrutp24%2Ffireworks-5c4ee5)](https://registry.terraform.io/providers/amrutp24/fireworks/latest)
 
 Terraform provider for [Fireworks AI](https://fireworks.ai): GPU inference
-deployments, fine-tuning datasets and fine-tuning jobs.
+deployments, fine-tuning datasets, fine-tuning jobs and secrets.
 
 Docs: [registry.terraform.io/providers/amrutp24/fireworks/latest/docs](https://registry.terraform.io/providers/amrutp24/fireworks/latest/docs).
 Changelog: [CHANGELOG.md](CHANGELOG.md).
@@ -91,9 +91,9 @@ this provider nor `terraform plan` reports cost.
 | `fireworks_deployment` | An existing deployment. |
 | `fireworks_model` | A model, such as a fine-tune's output model. |
 
-Not implemented: autoscaling policy blocks, dataset file upload,
-reinforcement fine-tuning jobs. API keys can't be managed: Fireworks only
-creates them after a browser sign-in, not with an API key.
+Not implemented: autoscaling policy blocks and dataset file upload. API keys
+can't be managed: Fireworks only creates them after a browser sign-in, not
+with an API key.
 
 ## Development
 

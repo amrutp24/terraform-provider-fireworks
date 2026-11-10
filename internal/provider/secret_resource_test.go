@@ -11,7 +11,10 @@ import (
 
 func TestAccSecretResource(t *testing.T) {
 	srv := newMockFireworks(t)
-	mock := srv.Config.Handler.(*mockFireworks)
+	mock, ok := srv.Config.Handler.(*mockFireworks)
+	if !ok {
+		t.Fatalf("unexpected mock handler type %T", srv.Config.Handler)
+	}
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,

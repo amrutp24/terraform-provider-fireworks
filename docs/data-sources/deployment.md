@@ -34,6 +34,7 @@ output "deployment_state" {
 - `accelerator_type` (String) GPU type serving the deployment.
 - `base_model` (String) Model the deployment serves.
 - `display_name` (String) Human-readable name.
+- `enable_addons` (Boolean) Whether LoRA addons can be loaded onto the deployment.
 - `max_replica_count` (Number) Maximum replicas for autoscaling.
 - `min_replica_count` (Number) Minimum replicas; 0 means scale-to-zero is enabled.
 - `name` (String) Full resource name, e.g. accounts/my-account/deployments/abc123.

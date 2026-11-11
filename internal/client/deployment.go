@@ -30,6 +30,7 @@ type Deployment struct {
 	AcceleratorCount *int64     `json:"acceleratorCount,omitempty"`
 	Precision        string     `json:"precision,omitempty"`
 	Placement        *Placement `json:"placement,omitempty"`
+	EnableAddons     *bool      `json:"enableAddons,omitempty"`
 
 	// Read-only.
 	State      string `json:"state,omitempty"`

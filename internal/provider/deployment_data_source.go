@@ -33,6 +33,7 @@ type DeploymentDataSourceModel struct {
 	MaxReplicaCount types.Int64  `tfsdk:"max_replica_count"`
 	AcceleratorType types.String `tfsdk:"accelerator_type"`
 	Precision       types.String `tfsdk:"precision"`
+	EnableAddons    types.Bool   `tfsdk:"enable_addons"`
 	State           types.String `tfsdk:"state"`
 }
 
@@ -74,6 +75,10 @@ func (d *DeploymentDataSource) Schema(ctx context.Context, req datasource.Schema
 			},
 			"precision": schema.StringAttribute{
 				Description: "Model serving precision.",
+				Computed:    true,
+			},
+			"enable_addons": schema.BoolAttribute{
+				Description: "Whether LoRA addons can be loaded onto the deployment.",
 				Computed:    true,
 			},
 			"state": schema.StringAttribute{
@@ -119,6 +124,7 @@ func (d *DeploymentDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	data.MaxReplicaCount = int64OrNull(dep.MaxReplicaCount)
 	data.AcceleratorType = stringOrNull(dep.AcceleratorType)
 	data.Precision = stringOrNull(dep.Precision)
+	data.EnableAddons = boolOrFalse(dep.EnableAddons)
 	data.State = types.StringValue(dep.State)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

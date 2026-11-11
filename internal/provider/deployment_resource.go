@@ -45,6 +45,7 @@ type DeploymentResourceModel struct {
 	AcceleratorCount types.Int64  `tfsdk:"accelerator_count"`
 	Precision        types.String `tfsdk:"precision"`
 	Region           types.String `tfsdk:"region"`
+	EnableAddons     types.Bool   `tfsdk:"enable_addons"`
 	WaitForReady     types.Bool   `tfsdk:"wait_for_ready"`
 	State            types.String `tfsdk:"state"`
 	CreateTime       types.String `tfsdk:"create_time"`
@@ -118,6 +119,14 @@ func (r *DeploymentResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Description: "Placement region, e.g. US_IOWA_1, EU_FRANKFURT_1.",
 				Optional:    true,
 			},
+			"enable_addons": schema.BoolAttribute{
+				Description: "Whether LoRA adapters can be loaded onto this deployment (multi-LoRA). " +
+					"FP8 and FP4 precisions don't support addons; use BF16. API default: false.",
+				MarkdownDescription: "Whether LoRA adapters can be loaded onto this deployment (multi-LoRA). " +
+					"FP8 and FP4 precisions don't support addons; use BF16. API default: `false`.",
+				Optional: true,
+				Computed: true,
+			},
 			"wait_for_ready": schema.BoolAttribute{
 				Description: "Whether to wait until the deployment reaches READY state. Defaults to true.",
 				Optional:    true,
@@ -172,6 +181,9 @@ func (m *DeploymentResourceModel) toAPI() *client.Deployment {
 	if !m.AcceleratorCount.IsNull() && !m.AcceleratorCount.IsUnknown() {
 		dep.AcceleratorCount = m.AcceleratorCount.ValueInt64Pointer()
 	}
+	if !m.EnableAddons.IsNull() && !m.EnableAddons.IsUnknown() {
+		dep.EnableAddons = m.EnableAddons.ValueBoolPointer()
+	}
 	if !m.Region.IsNull() && m.Region.ValueString() != "" {
 		dep.Placement = &client.Placement{Region: m.Region.ValueString()}
 	}
@@ -211,6 +223,13 @@ func (m *DeploymentResourceModel) fromAPI(dep *client.Deployment) {
 	m.AcceleratorCount = int64OrNull(dep.AcceleratorCount)
 	m.AcceleratorType = stringOrNull(dep.AcceleratorType)
 	m.Precision = stringOrNull(dep.Precision)
+	m.EnableAddons = boolOrFalse(dep.EnableAddons)
+}
+
+// boolOrFalse maps an absent bool to false. The API leaves false bools out of
+// responses, so absent and false mean the same thing.
+func boolOrFalse(v *bool) types.Bool {
+	return types.BoolValue(v != nil && *v)
 }
 
 func stringOrNull(s string) types.String {

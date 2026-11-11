@@ -93,6 +93,10 @@ func (m *mockFireworks) serveDeployments(w http.ResponseWriter, r *http.Request,
 	case r.Method == http.MethodPost && id == "":
 		var dep client.Deployment
 		_ = json.NewDecoder(r.Body).Decode(&dep)
+		if quantizedWithAddons(&dep) {
+			http.Error(w, `{"code":3,"message":"addons cannot be enabled with quantized precisions (FP8/FP4)"}`, http.StatusBadRequest)
+			return
+		}
 		m.nextID++
 		depID := fmt.Sprintf("dep%d", m.nextID)
 		dep.Name = "accounts/test-account/deployments/" + depID
@@ -118,6 +122,10 @@ func (m *mockFireworks) serveDeployments(w http.ResponseWriter, r *http.Request,
 		}
 		var patch client.Deployment
 		_ = json.NewDecoder(r.Body).Decode(&patch)
+		if quantizedWithAddons(&patch) {
+			http.Error(w, `{"code":3,"message":"addons cannot be enabled with quantized precisions (FP8/FP4)"}`, http.StatusBadRequest)
+			return
+		}
 		patch.Name = existing.Name
 		patch.CreateTime = existing.CreateTime
 		patch.State = client.DeploymentStateReady
@@ -161,6 +169,19 @@ func applyDeploymentDefaults(dep *client.Deployment) {
 	if dep.Precision == "" {
 		dep.Precision = "FP16"
 	}
+	// The API leaves false bools out of responses.
+	if dep.EnableAddons != nil && !*dep.EnableAddons {
+		dep.EnableAddons = nil
+	}
+}
+
+// quantizedWithAddons reports a request the API rejects: FP8 and FP4
+// precisions don't support addons.
+func quantizedWithAddons(dep *client.Deployment) bool {
+	if dep.EnableAddons == nil || !*dep.EnableAddons {
+		return false
+	}
+	return dep.Precision == "FP8" || dep.Precision == "FP4"
 }
 
 func (m *mockFireworks) serveDatasets(w http.ResponseWriter, r *http.Request, id string) {

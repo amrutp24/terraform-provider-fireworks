@@ -211,6 +211,12 @@ func (m *mockFireworks) serveDatasets(w http.ResponseWriter, r *http.Request, id
 }
 
 func (m *mockFireworks) serveSFTJobs(w http.ResponseWriter, r *http.Request, id string) {
+	// Custom methods are addressed as {id}:{action}, e.g. sftj1:cancel.
+	action := ""
+	if i := strings.IndexByte(id, ':'); i >= 0 {
+		id, action = id[:i], id[i+1:]
+	}
+
 	switch {
 	case r.Method == http.MethodPost && id == "":
 		var job client.SupervisedFineTuningJob
@@ -226,7 +232,7 @@ func (m *mockFireworks) serveSFTJobs(w http.ResponseWriter, r *http.Request, id 
 		m.sftJobs[jobID] = &job
 		writeJSON(w, &job)
 
-	case r.Method == http.MethodGet && id != "":
+	case r.Method == http.MethodGet && id != "" && action == "":
 		job, ok := m.sftJobs[id]
 		if !ok {
 			http.NotFound(w, r)
@@ -234,9 +240,25 @@ func (m *mockFireworks) serveSFTJobs(w http.ResponseWriter, r *http.Request, id 
 		}
 		writeJSON(w, job)
 
-	case r.Method == http.MethodDelete && id != "":
-		if _, ok := m.sftJobs[id]; !ok {
+	case r.Method == http.MethodPost && id != "" && action == "cancel":
+		job, ok := m.sftJobs[id]
+		if !ok {
 			http.NotFound(w, r)
+			return
+		}
+		job.State = client.JobStateCancelled
+		writeJSON(w, map[string]string{})
+
+	case r.Method == http.MethodDelete && id != "" && action == "":
+		job, ok := m.sftJobs[id]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		// The docs don't say whether DELETE stops a running job. The mock
+		// refuses it, so a destroy that skips the cancel fails the tests.
+		if client.SFTJobIsActive(job.State) {
+			http.Error(w, `{"code":9,"message":"mock: job is still active; cancel it before deleting"}`, http.StatusBadRequest)
 			return
 		}
 		delete(m.sftJobs, id)

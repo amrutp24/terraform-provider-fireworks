@@ -3,12 +3,12 @@
 page_title: "fireworks_supervised_fine_tuning_job Resource - Fireworks"
 subcategory: ""
 description: |-
-  A supervised fine-tuning job. Jobs run asynchronously and are immutable; changes force replacement. Running a job incurs training costs on your Fireworks account.
+  A supervised fine-tuning job. Jobs run asynchronously and are immutable; changes force replacement. Running a job incurs training costs on your Fireworks account. Destroying a job that is still queued or running cancels it before deleting it.
 ---
 
 # fireworks_supervised_fine_tuning_job (Resource)
 
-A supervised fine-tuning job. Jobs run asynchronously and are immutable; changes force replacement. Running a job incurs training costs on your Fireworks account.
+A supervised fine-tuning job. Jobs run asynchronously and are immutable; changes force replacement. Running a job incurs training costs on your Fireworks account. Destroying a job that is still queued or running cancels it before deleting it.
 
 ## Example Usage
 

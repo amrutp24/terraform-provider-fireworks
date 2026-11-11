@@ -83,6 +83,7 @@ this provider nor `terraform plan` reports cost.
 | `fireworks_dataset` | Fine-tuning or evaluation dataset. Immutable. Registers data by `external_url`; local file upload is not supported yet. |
 | `fireworks_supervised_fine_tuning_job` | Asynchronous SFT job. Immutable; progress shows in `state` on refresh. |
 | `fireworks_secret` | Account secret. The value is kept in state and never read back, so changes made outside Terraform aren't detected. |
+| `fireworks_deployed_model` | LoRA loaded onto a deployment or onto serverless. CRUD, import, waits for `DEPLOYED`. |
 
 ## Data sources
 

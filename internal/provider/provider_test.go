@@ -28,6 +28,8 @@ type mockFireworks struct {
 	sftJobs     map[string]*client.SupervisedFineTuningJob
 	models      map[string]*client.Model
 	secrets     map[string]*client.Secret
+
+	deployedModels map[string]*client.DeployedModel
 }
 
 func newMockFireworks(t *testing.T) *httptest.Server {
@@ -46,6 +48,7 @@ func newMockFireworks(t *testing.T) *httptest.Server {
 			},
 		},
 	}
+	m.deployedModels = map[string]*client.DeployedModel{}
 	srv := httptest.NewServer(m)
 	t.Cleanup(srv.Close)
 	return srv
@@ -83,6 +86,8 @@ func (m *mockFireworks) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		m.serveModels(w, r, id)
 	case "secrets":
 		m.serveSecrets(w, r, id)
+	case "deployedModels":
+		m.serveDeployedModels(w, r, id)
 	default:
 		http.NotFound(w, r)
 	}
@@ -280,6 +285,78 @@ func (m *mockFireworks) serveModels(w http.ResponseWriter, r *http.Request, id s
 		return
 	}
 	writeJSON(w, model)
+}
+
+func (m *mockFireworks) serveDeployedModels(w http.ResponseWriter, r *http.Request, id string) {
+	switch {
+	case r.Method == http.MethodPost && id == "":
+		var dm client.DeployedModel
+		_ = json.NewDecoder(r.Body).Decode(&dm)
+		// Real-API rule: exactly one of serverless or deployment.
+		serverless := dm.Serverless != nil && *dm.Serverless
+		if serverless == (dm.Deployment != "") {
+			http.Error(w, `{"code":3,"message":"exactly one of serverless or deployment must be set"}`, http.StatusBadRequest)
+			return
+		}
+		if _, ok := m.deployments[client.ResourceID(dm.Deployment)]; dm.Deployment != "" && !ok {
+			http.NotFound(w, r)
+			return
+		}
+		m.nextID++
+		dmID := fmt.Sprintf("dm%d", m.nextID)
+		dm.Name = "accounts/test-account/deployedModels/" + dmID
+		dm.State = client.DeployedModelStateDeployed // skip DEPLOYING to keep tests fast
+		dm.CreateTime = "2026-07-05T00:00:00Z"
+		// The first copy of a model becomes its default.
+		if dm.Default == nil {
+			first := true
+			for _, other := range m.deployedModels {
+				if other.Model == dm.Model {
+					first = false
+				}
+			}
+			dm.Default = &first
+		}
+		m.deployedModels[dmID] = &dm
+		writeJSON(w, &dm)
+
+	case r.Method == http.MethodGet && id != "":
+		dm, ok := m.deployedModels[id]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		writeJSON(w, dm)
+
+	case r.Method == http.MethodPatch && id != "":
+		dm, ok := m.deployedModels[id]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		var upd client.DeployedModelUpdate
+		_ = json.NewDecoder(r.Body).Decode(&upd)
+		dm.DisplayName = upd.DisplayName
+		dm.Description = upd.Description
+		if upd.Default != nil {
+			dm.Default = upd.Default
+		}
+		if upd.Public != nil {
+			dm.Public = upd.Public
+		}
+		writeJSON(w, dm)
+
+	case r.Method == http.MethodDelete && id != "":
+		if _, ok := m.deployedModels[id]; !ok {
+			http.NotFound(w, r)
+			return
+		}
+		delete(m.deployedModels, id)
+		writeJSON(w, map[string]string{})
+
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 func writeJSON(w http.ResponseWriter, v any) {

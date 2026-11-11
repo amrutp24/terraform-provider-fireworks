@@ -102,6 +102,7 @@ func (p *FireworksProvider) Resources(ctx context.Context) []func() resource.Res
 		NewDatasetResource,
 		NewSFTJobResource,
 		NewSecretResource,
+		NewDeployedModelResource,
 	}
 }
 

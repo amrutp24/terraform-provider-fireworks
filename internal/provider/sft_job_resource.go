@@ -62,7 +62,8 @@ func (r *SFTJobResource) Schema(ctx context.Context, req resource.SchemaRequest,
 
 	resp.Schema = schema.Schema{
 		Description: "A supervised fine-tuning job. Jobs run asynchronously and are immutable; " +
-			"changes force replacement. Running a job incurs training costs on your Fireworks account.",
+			"changes force replacement. Running a job incurs training costs on your Fireworks account. " +
+			"Destroying a job that is still queued or running cancels it before deleting it.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "Job ID (last segment of the resource name).",
@@ -334,9 +335,46 @@ func (r *SFTJobResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	if err := r.client.DeleteSupervisedFineTuningJob(ctx, data.ID.ValueString()); err != nil && !client.IsNotFound(err) {
+	id := data.ID.ValueString()
+	if err := r.cancelIfActive(ctx, id); err != nil {
+		if client.IsNotFound(err) {
+			return
+		}
+		resp.Diagnostics.AddError("Error cancelling fine-tuning job", err.Error())
+		return
+	}
+
+	if err := r.client.DeleteSupervisedFineTuningJob(ctx, id); err != nil && !client.IsNotFound(err) {
 		resp.Diagnostics.AddError("Error deleting fine-tuning job", err.Error())
 	}
+}
+
+// cancelIfActive cancels the job if it is still queued or training, so that
+// removing it from state never leaves a run going. Only a not-found from a
+// read means the job is gone; a failed cancel on a job that is still active
+// is returned as an error that IsNotFound does not match.
+func (r *SFTJobResource) cancelIfActive(ctx context.Context, id string) error {
+	job, err := r.client.GetSupervisedFineTuningJob(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !client.SFTJobIsActive(job.State) {
+		return nil
+	}
+
+	cancelErr := r.client.CancelSupervisedFineTuningJob(ctx, id)
+	if cancelErr == nil {
+		return nil
+	}
+	// The job may have finished between the read and the cancel.
+	job, err = r.client.GetSupervisedFineTuningJob(ctx, id)
+	if err != nil {
+		return err
+	}
+	if client.SFTJobIsActive(job.State) {
+		return fmt.Errorf("job %s may still be running (state %s); cancel failed: %v", id, job.State, cancelErr)
+	}
+	return nil
 }
 
 func (r *SFTJobResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

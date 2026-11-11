@@ -8,12 +8,27 @@ import (
 
 // Fine-tuning job states reported by the API.
 const (
-	JobStateCreating  = "JOB_STATE_CREATING"
-	JobStateRunning   = "JOB_STATE_RUNNING"
-	JobStateCompleted = "JOB_STATE_COMPLETED"
-	JobStateFailed    = "JOB_STATE_FAILED"
-	JobStateCancelled = "JOB_STATE_CANCELLED"
+	JobStateCreating             = "JOB_STATE_CREATING"
+	JobStatePending              = "JOB_STATE_PENDING"
+	JobStateValidating           = "JOB_STATE_VALIDATING"
+	JobStateCreatingInputDataset = "JOB_STATE_CREATING_INPUT_DATASET"
+	JobStateRunning              = "JOB_STATE_RUNNING"
+	JobStateReQueueing           = "JOB_STATE_RE_QUEUEING"
+	JobStateCompleted            = "JOB_STATE_COMPLETED"
+	JobStateFailed               = "JOB_STATE_FAILED"
+	JobStateCancelled            = "JOB_STATE_CANCELLED"
 )
+
+// SFTJobIsActive reports whether a job in this state is queued for or using
+// training capacity, i.e. whether it should be cancelled before it is deleted.
+func SFTJobIsActive(state string) bool {
+	switch state {
+	case JobStateCreating, JobStatePending, JobStateValidating,
+		JobStateCreatingInputDataset, JobStateRunning, JobStateReQueueing:
+		return true
+	}
+	return false
+}
 
 // SupervisedFineTuningJob mirrors the API object. Jobs are immutable once
 // created. Pointers distinguish "unset" from zero values.
@@ -61,6 +76,12 @@ func (c *Client) GetSupervisedFineTuningJob(ctx context.Context, id string) (*Su
 		return nil, err
 	}
 	return &out, nil
+}
+
+// CancelSupervisedFineTuningJob stops a queued or running job:
+// POST .../supervisedFineTuningJobs/{id}:cancel with an empty JSON body.
+func (c *Client) CancelSupervisedFineTuningJob(ctx context.Context, id string) error {
+	return c.do(ctx, http.MethodPost, c.sftJobPath(id)+":cancel", struct{}{}, nil)
 }
 
 func (c *Client) DeleteSupervisedFineTuningJob(ctx context.Context, id string) error {
